@@ -87,3 +87,9 @@ def test_diff(clean, sloppy):
     d = _diff(sloppy, clean)
     assert d["composite_delta"] > 0
     assert all(v["normalized_delta"] >= 0 for k, v in d["families"].items() if v["normalized_delta"] is not None)
+
+
+def test_target_module_does_not_shadow_stdlib():
+    # a target with its own types.py (like click) must not break sloptrack's imports
+    g = score_path(FIX / "shadow")["families"]["granularity"]
+    assert "sloptrack failed" not in g["source"], g

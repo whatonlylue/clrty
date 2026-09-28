@@ -25,6 +25,8 @@ def _run(cmd, cwd, ok=(0, 1)):
     r = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=_env())
     if r.returncode not in ok:
         raise ToolError(f"{cmd[0]} exit {r.returncode}: {r.stderr.strip()[:500]}")
+    if not r.stdout.strip() and r.stderr.strip():
+        raise ToolError(f"{cmd[0]} exit {r.returncode}, no output: {r.stderr.strip()[-500:]}")
     return r.stdout
 
 
@@ -49,7 +51,7 @@ def dist_version(name: str) -> str:
 # ---------------------------------------------------------------- scb-check
 def _scb_cmd():
     exe = Path(sys.executable).parent / "scb-check"
-    return [str(exe)] if exe.exists() else [sys.executable, "-c", "from scb_check.cli import main; main()"]
+    return [str(exe)] if exe.exists() else [sys.executable, "-P", "-c", "from scb_check.cli import main; main()"]
 
 
 # SlopCodeBench's own harness (slop_code/metrics/checkpoint/driver.py) always runs
@@ -110,8 +112,10 @@ def scb_findings(path: Path, root: Path) -> dict:
 
 # ---------------------------------------------------------------- sloptrack
 def sloptrack_json(path: Path) -> dict:
+    # -P: we run from inside the target, and `python -m` would put it first on sys.path, so a
+    # target module named like a stdlib one (click's types.py) shadows it and sloptrack dies on import.
     cwd = path if path.is_dir() else path.parent
-    out = _run([sys.executable, "-m", "sloptrack", "measure", str(path), "--json", "--no-uvx",
+    out = _run([sys.executable, "-P", "-m", "sloptrack", "measure", str(path), "--json", "--no-uvx",
                 "--no-git", "--top", "1000"], cwd, ok=(0, 1))
     try:
         return json.loads(out)

@@ -35,4 +35,4 @@ Stdlib only (Python 3.12). Idempotent; checkouts land in `corpus/repos/<name>/` 
 
 Scope matters more than repo. Whole-repo erosion for click and aiohttp lands at the SCB human mean (0.29 and 0.26 vs 0.31; rich 0.46) because tests and examples add many small flat functions; library-only erosion is 0.47-0.59 for all three. The SCB panel scored repos at HEAD, so "whole" is the like-for-like comparison with its human means, but E1 raters will judge library code. Pick one scope before building E1 pairs and score both sides of every pair with it.
 
-Before the `-P` fix in `spike/src/clrty_spike/tools.py`, click lib silently fell back to the stand-in for granularity (its `types.py` shadowed the stdlib inside sloptrack) and scored 63.92.
+Before the `-P` fix in `spike/src/clrty_spike/tools.py`, library-only scoring of click and rich silently fell back to the stand-in for granularity: both ship stdlib-named modules (click's `types.py`, rich's `abc.py`, `json.py` and `logging.py`) that shadowed the stdlib inside sloptrack. click lib scored 63.92 and rich lib 51.89. Repeated runs give identical scores.

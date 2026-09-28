@@ -29,7 +29,7 @@ export PATH="$HOME/.local/bin:$PATH"
 python3 eval/ranking/tally.py --selftest       # ranking tally, stdlib only
 ```
 
-Optional: `python3 corpus/fetch.py` clones the pinned evaluation repos (click, aiohttp, rich) into `corpus/repos/`, which is gitignored. Score one with `(cd spike && uv run clrty-spike score ../corpus/repos/click)`.
+Optional: `python3 corpus/fetch.py` clones the pinned evaluation repos (click, aiohttp, rich) into `corpus/repos/`, which is gitignored. Score one with `(cd spike && uv run clrty-spike score ../corpus/repos/click)`, or only its library code with `../corpus/repos/click/src/click` (the manifest's `subdir`). The two scopes give very different numbers; see `corpus/README.md`.
 
 ## Layout
 

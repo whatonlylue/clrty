@@ -2,10 +2,11 @@
 name = "clrty-spike"
 version = "0.0.1"
 description = "THROWAWAY P0 spike: wraps scb-check + radon + sloptrack into one score vector"
+license = "Apache-2.0"
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "radon==6.0.1",
-    "scb-check @ git+https://github.com/gabeorlanski/scb-check@a8618228939def726c2ec48b354693e5aa1999d5",
+    "scb-check @ git+https://github.com/gabeorlanski/scb-check@adf82d88dea3119fa38b6baf762c898a7fe01ba3",
     "sloptrack @ git+https://github.com/kennyfrc/sloptrack@4ddd8693f66912fba85e74acd5467f564896043a",
 ]
 

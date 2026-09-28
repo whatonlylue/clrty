@@ -57,7 +57,7 @@ def score_path(path: str | Path, anchors_path: Path | None = None) -> dict:
         fams["verbosity"] = _fam(scb["verbosity"], normalize(scb["verbosity"], a["good"], a["bad"]), "scb-check",
                                  flagged_loc=scb["verbosity_flagged_loc"], clone_loc=scb["clone_loc"],
                                  ast_grep_flagged_loc=scb["ast_grep_flagged_loc"],
-                                 structural_rule_loc=scb["structural_rule_loc"])
+                                 structural_rule_loc=scb.get("structural_rule_loc"))  # absent in scb-check 0.1.3 -> null
         dup = scb["clone_loc"] / scb["total_loc"] if scb["total_loc"] else 0.0
         a = A["duplication"]
         fams["duplication"] = _fam(dup, normalize(dup, a["good"], a["bad"]), "scb-check",

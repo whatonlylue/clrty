@@ -1,0 +1,45 @@
+{
+  "title": "Example pairs (fake scores)",
+  "pairs": [
+    {
+      "id": "ex-01",
+      "language": "python",
+      "context": "Return the active users' email addresses, lowercased and de-duplicated.",
+      "a": "def emails(users):\n    result = []\n    for u in users:\n        if u.active == True:\n            e = u.email.lower()\n            if e not in result:\n                result.append(e)\n    return result\n",
+      "b": "def active_emails(users):\n    return sorted({u.email.lower() for u in users if u.active})\n",
+      "meta": { "before": "a", "score_delta": 0.42 }
+    },
+    {
+      "id": "ex-02",
+      "language": "python",
+      "context": "Parse a 'key=value;key=value' config string.",
+      "a": "def parse(s):\n    out = {}\n    for part in s.split(';'):\n        if not part.strip():\n            continue\n        k, _, v = part.partition('=')\n        out[k.strip()] = v.strip()\n    return out\n",
+      "b": "def _split_pair(part):\n    k, _, v = part.partition('=')\n    return k.strip(), v.strip()\n\n\ndef _non_empty(parts):\n    return [p for p in parts if p.strip()]\n\n\ndef _build(pairs):\n    out = {}\n    for k, v in pairs:\n        out[k] = v\n    return out\n\n\ndef parse(s):\n    return _build([_split_pair(p) for p in _non_empty(s.split(';'))])\n",
+      "meta": { "before": "a", "score_delta": -0.31 }
+    },
+    {
+      "id": "ex-03",
+      "language": "python",
+      "context": "Fetch a JSON document over HTTP with retries.",
+      "a": "def fetch(url, retries=3):\n    try:\n        return requests.get(url, timeout=5).json()\n    except Exception:\n        if retries > 0:\n            return fetch(url, retries - 1)\n        return None\n",
+      "b": "def fetch_json(url, retries=3, timeout=5):\n    last_error = None\n    for _ in range(retries + 1):\n        try:\n            resp = requests.get(url, timeout=timeout)\n            resp.raise_for_status()\n            return resp.json()\n        except requests.RequestException as exc:\n            last_error = exc\n    raise FetchError(url) from last_error\n",
+      "meta": { "before": "b", "score_delta": 0.18 }
+    },
+    {
+      "id": "ex-04",
+      "language": "python",
+      "context": "Compute the total price of an order with an optional discount.",
+      "a": "def total(items, discount=None):\n    t = 0\n    for i in items:\n        t += i['price'] * i['qty']\n    if discount:\n        t = t - t * discount\n    return t\n",
+      "b": "def total(items, discount=None):\n    subtotal = sum(i['price'] * i['qty'] for i in items)\n    return subtotal * (1 - discount) if discount else subtotal\n",
+      "meta": { "before": "a", "score_delta": -0.05 }
+    },
+    {
+      "id": "ex-05",
+      "language": "python",
+      "context": "Group words by their first letter.",
+      "a": "def group(words):\n    d = {}\n    for w in words:\n        d.setdefault(w[0], []).append(w)\n    return d\n",
+      "b": "def group_words_by_first_letter(words: list[str]) -> dict[str, list[str]]:\n    \"\"\"Group words by first letter.\n\n    Args:\n        words: the words to group.\n\n    Returns:\n        A mapping from first letter to words.\n    \"\"\"\n    groups: dict[str, list[str]] = {}\n    for word in words:\n        first_letter = word[0]\n        if first_letter not in groups:\n            groups[first_letter] = []\n        groups[first_letter].append(word)\n    return groups\n",
+      "meta": { "before": "a", "score_delta": 0.0 }
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "format": "clarity-blind-rank/1",
+  "rater": "Cara",
+  "seed": 2769009243,
+  "pairs_fingerprint": "371f4fc4",
+  "pairs_source": "pairs.example.json",
+  "started_at": "2026-09-28T20:18:25.672Z",
+  "exported_at": "2026-09-28T20:18:25.854Z",
+  "complete": true,
+  "results": [
+    {
+      "id": "ex-05",
+      "position": 1,
+      "left": "b",
+      "right": "a",
+      "choice": "same",
+      "winner": "tie",
+      "comment": "first comment",
+      "better": "tie"
+    },
+    {
+      "id": "ex-02",
+      "position": 2,
+      "left": "b",
+      "right": "a",
+      "choice": "left",
+      "winner": "b",
+      "comment": "",
+      "better": "after"
+    },
+    {
+      "id": "ex-03",
+      "position": 3,
+      "left": "b",
+      "right": "a",
+      "choice": "left",
+      "winner": "b",
+      "comment": "",
+      "better": "before"
+    },
+    {
+      "id": "ex-04",
+      "position": 4,
+      "left": "b",
+      "right": "a",
+      "choice": "right",
+      "winner": "a",
+      "comment": "",
+      "better": "before"
+    },
+    {
+      "id": "ex-01",
+      "position": 5,
+      "left": "a",
+      "right": "b",
+      "choice": "right",
+      "winner": "b",
+      "comment": "",
+      "better": "after"
+    }
+  ]
+}

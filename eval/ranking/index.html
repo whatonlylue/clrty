@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blind code ranking</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<style>
+  :root { --bg:#f6f7f9; --fg:#1b1f24; --muted:#5b6570; --card:#fff; --line:#d5d9df; --accent:#2457d6; --accent-fg:#fff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14171b; --fg:#e6e8eb; --muted:#9aa4af; --card:#1d2126; --line:#333a42; --accent:#6f95ff; --accent-fg:#0b1020; }
+    .hljs { background:transparent !important; color:var(--fg) !important; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.45 system-ui,sans-serif; }
+  main { max-width:1300px; margin:0 auto; padding:16px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .muted { color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px; margin:12px 0; }
+  .hidden { display:none !important; }
+  button, .btn { font:inherit; padding:9px 14px; border:1px solid var(--line); border-radius:6px; background:var(--card); color:var(--fg); cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  button.sel { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
+  input[type=text], textarea { font:inherit; width:100%; padding:8px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); }
+  .bar { height:8px; background:var(--line); border-radius:4px; overflow:hidden; }
+  .bar > div { height:100%; width:0; background:var(--accent); transition:width .2s; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .sides { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:800px) { .sides { grid-template-columns:1fr; } }
+  .side { min-width:0; }
+  .side h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 6px; }
+  pre { margin:0; padding:12px; overflow:auto; max-height:70vh; border:1px solid var(--line); border-radius:6px; background:var(--card); font-size:13px; }
+  pre code { background:transparent !important; padding:0 !important; }
+  .choices { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0 8px; }
+  @media (max-width:520px) { .choices { grid-template-columns:1fr; } }
+  kbd { font:12px monospace; padding:1px 5px; border:1px solid var(--line); border-radius:4px; }
+  .ctx { border-left:3px solid var(--accent); padding-left:10px; margin:0 0 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">Blind code ranking</h1>
+  <p class="muted">For each pair, pick the version that is clearer and easier to maintain. You will not be told which is the original.</p>
+
+  <section id="load" class="card">
+    <p><strong>Load a pairs file</strong></p>
+    <input type="file" id="file" accept=".json,application/json">
+    <p class="muted" id="loadmsg"></p>
+  </section>
+
+  <section id="name" class="card hidden">
+    <label for="rater"><strong>Your name</strong></label>
+    <div class="row" style="margin-top:6px">
+      <input type="text" id="rater" placeholder="e.g. Sam" style="max-width:280px">
+      <button id="start">Start</button>
+    </div>
+    <p class="muted" id="namemsg"></p>
+  </section>
+
+  <section id="rank" class="hidden">
+    <div class="row" style="justify-content:space-between">
+      <span id="progtext" class="muted"></span>
+      <span class="row"><button id="back">Back</button><button id="dl1">Download results</button></span>
+    </div>
+    <div class="bar" style="margin:6px 0 12px"><div id="progbar"></div></div>
+    <div id="ctx" class="ctx hidden"></div>
+    <div class="sides">
+      <div class="side"><h2>Left</h2><pre><code id="codeL"></code></pre></div>
+      <div class="side"><h2>Right</h2><pre><code id="codeR"></code></pre></div>
+    </div>
+    <div class="choices">
+      <button id="cL" data-c="left">Left is clearer <kbd>1</kbd> <kbd>&larr;</kbd></button>
+      <button id="cS" data-c="same">About the same <kbd>2</kbd> <kbd>&darr;</kbd></button>
+      <button id="cR" data-c="right">Right is clearer <kbd>3</kbd> <kbd>&rarr;</kbd></button>
+    </div>
+    <textarea id="comment" rows="2" placeholder="Optional comment (saved when you choose)"></textarea>
+    <p class="muted">Shortcuts: 1/2/3 or arrow keys to choose, B to go back. Progress is saved in this browser.</p>
+  </section>
+
+  <section id="done" class="card hidden">
+    <h2 style="margin-top:0">All done, thank you.</h2>
+    <p>Download your results file and send it back.</p>
+    <button id="dl2" class="sel">Download results</button>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var data = null;        // parsed pairs file
+  var fp = '';            // fingerprint of the pairs file
+  var state = null;       // {rater, seed, order:[idx], flips:[bool], answers:{id:{...}}, pos}
+  var pairsById = {};
+
+  // ---- seeded RNG (mulberry32) + Fisher-Yates ----
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function shuffle(n, rnd) {
+    var a = []; for (var i = 0; i < n; i++) a.push(i);
+    for (var j = n - 1; j > 0; j--) { var k = Math.floor(rnd() * (j + 1)); var t = a[j]; a[j] = a[k]; a[k] = t; }
+    return a;
+  }
+  function hash(str) { // cyrb-ish 32-bit string hash
+    var h = 2166136261;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return (h >>> 0).toString(16);
+  }
+  function safe(fn) { try { return fn(); } catch (e) { return null; } }
+  function storeKey(name) { return 'clarity-rank:' + fp + ':' + name.trim().toLowerCase(); }
+  function save() { safe(function () { localStorage.setItem(storeKey(state.rater), JSON.stringify(state)); }); }
+
+  // ---- loading ----
+  function accept(text, label) {
+    var d;
+    try { d = JSON.parse(text); } catch (e) { $('loadmsg').textContent = 'Not valid JSON: ' + e.message; return; }
+    if (!d || !Array.isArray(d.pairs) || !d.pairs.length) { $('loadmsg').textContent = 'No "pairs" array found.'; return; }
+    var seen = {};
+    for (var i = 0; i < d.pairs.length; i++) {
+      var p = d.pairs[i];
+      if (!p || typeof p.id !== 'string' || typeof p.a !== 'string' || typeof p.b !== 'string') {
+        $('loadmsg').textContent = 'Pair #' + (i + 1) + ' needs string id, a and b.'; return;
+      }
+      if (seen[p.id]) { $('loadmsg').textContent = 'Duplicate id: ' + p.id; return; }
+      seen[p.id] = 1;
+    }
+    data = d; pairsById = {};
+    d.pairs.forEach(function (p) { pairsById[p.id] = p; });
+    fp = hash(d.pairs.map(function (p) { return p.id + '\u0000' + p.a + '\u0000' + p.b; }).join('\u0001'));
+    data._label = label || '';
+    if (d.title) { $('title').textContent = d.title; document.title = d.title; }
+    $('load').classList.add('hidden');
+    $('name').classList.remove('hidden');
+    var last = safe(function () { return localStorage.getItem('clarity-rank:lastname'); });
+    if (last) $('rater').value = last;
+    $('namemsg').textContent = d.pairs.length + ' pairs loaded.';
+    $('rater').focus();
+  }
+
+  $('file').addEventListener('change', function (e) {
+    var f = e.target.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function () { accept(r.result, f.name); };
+    r.readAsText(f);
+  });
+
+  var q = new URLSearchParams(location.search).get('pairs');
+  if (q) {
+    $('loadmsg').textContent = 'Loading ' + q + ' ...';
+    fetch(q).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(function (t) { accept(t, q); })
+      .catch(function (e) { $('loadmsg').textContent = 'Could not load ' + q + ' (' + e.message + '). Use the file picker instead.'; });
+  }
+
+  // ---- start / resume ----
+  function begin() {
+    var name = $('rater').value.trim();
+    if (!name) { $('namemsg').textContent = 'Please enter your name.'; return; }
+    safe(function () { localStorage.setItem('clarity-rank:lastname', name); });
+    var saved = safe(function () { return JSON.parse(localStorage.getItem(storeKey(name))); });
+    if (saved && saved.order && saved.order.length === data.pairs.length) {
+      state = saved;
+    } else {
+      var seed = (Math.random() * 4294967296) >>> 0;
+      var rnd = mulberry32(seed);
+      var order = shuffle(data.pairs.length, rnd);
+      var flips = data.pairs.map(function () { return rnd() < 0.5; });
+      state = { rater: name, seed: seed, order: order, flips: flips, answers: {}, pos: 0, started_at: new Date().toISOString() };
+      save();
+    }
+    $('name').classList.add('hidden');
+    show();
+  }
+  $('start').addEventListener('click', begin);
+  $('rater').addEventListener('keydown', function (e) { if (e.key === 'Enter') begin(); });
+
+  // ---- rendering ----
+  function setCode(el, code, lang) {
+    el.textContent = code;
+    el.className = '';
+    el.removeAttribute('data-highlighted');
+    if (window.hljs) {
+      safe(function () {
+        if (lang && hljs.getLanguage(lang)) el.className = 'language-' + lang;
+        hljs.highlightElement(el);
+      });
+    }
+  }
+  function sides(i) { // returns which of a/b is on the left for order index i
+    var flipped = state.flips[i];
+    return flipped ? { L: 'b', R: 'a' } : { L: 'a', R: 'b' };
+  }
+  function answeredCount() { return Object.keys(state.answers).length; }
+
+  function show() {
+    var n = state.order.length;
+    if (state.pos >= n) {
+      $('rank').classList.add('hidden'); $('done').classList.remove('hidden');
+      return;
+    }
+    $('done').classList.add('hidden'); $('rank').classList.remove('hidden');
+    var idx = state.order[state.pos], p = data.pairs[idx], s = sides(idx);
+    $('progtext').textContent = 'Pair ' + (state.pos + 1) + ' of ' + n + ' (' + answeredCount() + ' answered)';
+    $('progbar').style.width = (100 * answeredCount() / n) + '%';
+    var ctx = $('ctx');
+    if (p.context) { ctx.textContent = p.context; ctx.classList.remove('hidden'); } else { ctx.classList.add('hidden'); }
+    setCode($('codeL'), p[s.L], p.language);
+    setCode($('codeR'), p[s.R], p.language);
+    var prev = state.answers[p.id];
+    ['cL', 'cS', 'cR'].forEach(function (id) {
+      $(id).classList.toggle('sel', !!prev && prev.choice === $(id).getAttribute('data-c'));
+    });
+    $('comment').value = prev ? (prev.comment || '') : '';
+    $('back').disabled = state.pos === 0;
+    window.scrollTo(0, 0);
+  }
+
+  function choose(choice) {
+    if (!state || state.pos >= state.order.length) return;
+    var idx = state.order[state.pos], p = data.pairs[idx], s = sides(idx);
+    var win = choice === 'left' ? s.L : choice === 'right' ? s.R : 'tie';
+    state.answers[p.id] = { choice: choice, winner: win, comment: $('comment').value.trim(), at: new Date().toISOString() };
+    state.pos++;
+    save();
+    show();
+  }
+  function back() { if (state && state.pos > 0) { state.pos--; save(); show(); } }
+
+  $('cL').addEventListener('click', function () { choose('left'); });
+  $('cS').addEventListener('click', function () { choose('same'); });
+  $('cR').addEventListener('click', function () { choose('right'); });
+  $('back').addEventListener('click', back);
+
+  document.addEventListener('keydown', function (e) {
+    if ($('rank').classList.contains('hidden')) return;
+    var t = e.target && e.target.tagName;
+    if (t === 'TEXTAREA' || t === 'INPUT') return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key;
+    if (k === '1' || k === 'ArrowLeft') { e.preventDefault(); choose('left'); }
+    else if (k === '2' || k === 'ArrowDown' || k === 'ArrowUp') { e.preventDefault(); choose('same'); }
+    else if (k === '3' || k === 'ArrowRight') { e.preventDefault(); choose('right'); }
+    else if (k === 'b' || k === 'B' || k === 'Backspace') { e.preventDefault(); back(); }
+  });
+
+  // ---- export ----
+  function buildResults() {
+    var rows = [];
+    state.order.forEach(function (idx, i) {
+      var p = data.pairs[idx], a = state.answers[p.id];
+      if (!a) return;
+      var s = sides(idx);
+      var row = { id: p.id, position: i + 1, left: s.L, right: s.R, choice: a.choice, winner: a.winner, comment: a.comment };
+      var before = p.meta && p.meta.before;
+      if (before === 'a' || before === 'b') {
+        row.better = a.winner === 'tie' ? 'tie' : (a.winner === before ? 'before' : 'after');
+      }
+      rows.push(row);
+    });
+    return {
+      format: 'clarity-blind-rank/1',
+      rater: state.rater,
+      seed: state.seed,
+      pairs_fingerprint: fp,
+      pairs_source: data._label,
+      started_at: state.started_at,
+      exported_at: new Date().toISOString(),
+      complete: answeredCount() === data.pairs.length,
+      results: rows
+    };
+  }
+  function download() {
+    if (!state) return;
+    var blob = new Blob([JSON.stringify(buildResults(), null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'results-' + state.rater.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+  $('dl1').addEventListener('click', download);
+  $('dl2').addEventListener('click', download);
+})();
+</script>
+</body>
+</html>

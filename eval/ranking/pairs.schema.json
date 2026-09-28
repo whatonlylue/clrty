@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Clarity blind-ranking pairs file",
+  "type": "object",
+  "required": ["pairs"],
+  "properties": {
+    "title": { "type": "string", "description": "Shown at the top of the page, e.g. 'E1 dry run'." },
+    "pairs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "language", "a", "b", "meta"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "description": "Unique, stable pair id." },
+          "language": { "type": "string", "description": "highlight.js language name, e.g. python." },
+          "context": { "type": "string", "description": "Optional note shown to raters (what the code is for, not what changed)." },
+          "a": { "type": "string", "description": "Code for side A." },
+          "b": { "type": "string", "description": "Code for side B." },
+          "meta": {
+            "type": "object",
+            "description": "HIDDEN from raters. Use tally.py --strip to make the public file you send out.",
+            "required": ["before", "score_delta"],
+            "properties": {
+              "before": { "enum": ["a", "b"], "description": "Which side is the original code; the other side is the agent-refactored 'after'." },
+              "score_delta": {
+                "type": "number",
+                "description": "score(after) - score(before), signed so that positive means the score judges 'after' clearer, negative means 'before' clearer, 0 means a tie. Not needed for E5."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

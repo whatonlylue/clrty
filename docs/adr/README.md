@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-This directory documents the key architectural and technology choices made during Clarity's design. Each ADR records the context, options considered, the decision made, and its consequences, grounded in evidence from the project plan. ADRs are immutable once accepted; changes to decisions result in new records. They serve as both decision history and onboarding material for contributors, explaining not just what was chosen but why.
+This directory documents the key architectural and technology choices made during clrty's design. Each ADR records the context, options considered, the decision made, and its consequences, grounded in evidence from the project plan. ADRs are immutable once accepted; changes to decisions result in new records. They serve as both decision history and onboarding material for contributors, explaining not just what was chosen but why.
 
 | # | Title | Status |
 |---|-------|--------|

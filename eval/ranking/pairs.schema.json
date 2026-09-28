@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Clarity blind-ranking pairs file",
+  "title": "clrty blind-ranking pairs file",
   "type": "object",
   "required": ["pairs"],
   "properties": {

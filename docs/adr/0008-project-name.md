@@ -5,7 +5,7 @@ Status: Accepted
 
 ## Context
 
-Two naming problems exist:
+The project was originally working-named "Clarity". Two naming problems exist with that name:
 
 **(a) Taken on registries:** The name "clarity" is already claimed by unrelated packages on crates.io (Ethereum client by Althea), PyPI (Python logger by singhsays), and npm (string obfuscation utility by DamonOehlman). Using it would create install confusion across these ecosystems.
 
@@ -43,14 +43,13 @@ A unique package name is required for distribution. The name should:
 
 **Package name: `clrty`; binary: `clrty`**
 
-`clrty` is a vowelless form following the style of `rg` (ripgrep) and `fd`. It is available on all four registries, eliminates search collision with the Stacks Clarity language, and is short to type. Using the same name for package and binary removes confusion and packaging overhead. The project's prose and display name remains "Clarity" to maintain recognizability in documentation and marketing (e.g., "clrty (Clarity)" on first reference). Trade-off: harder to say aloud and to guess from hearing alone, so documentation should clarify the pronunciation and spelling.
+`clrty` is a vowelless form following the style of `rg` (ripgrep) and `fd`. It is available on all four registries, eliminates search collision with the Stacks Clarity language, and is short to type. Using the same name for package and binary removes confusion and packaging overhead. The project is called clrty everywhere, in prose, display name, package, and binary. Trade-off: harder to say aloud and to guess from hearing alone, so documentation should clarify the pronunciation and spelling.
 
 ## Consequences
 
 - Users install via `cargo install clrty`, `pip install clrty`, `npm install -g clrty`, or `brew install clrty`
 - The binary is invoked as `clrty <command>` everywhere
-- Configuration file remains `clarity.toml` unless decided otherwise (rename to `clrty.toml` in later work)
-- Workspace crate names remain `clarity-*` for now; rename to `clrty-*` in M1a when workspace is created
+- The configuration file is `clrty.toml` and workspace crates are named `clrty-*`; the rename from the working name is already done
 - **Package name collision:** Avoided; no registry conflict
 - **Search ambiguity:** Eliminated; vowelless form has no overlap with Stacks Clarity language
 - **PATH collision:** None; Stacks tools use `clarinet` and `stacks-node`

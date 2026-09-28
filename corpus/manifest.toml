@@ -1,4 +1,4 @@
-# Clarity evaluation corpus manifest.
+# clrty evaluation corpus manifest.
 # Consumed by corpus/fetch.py (stdlib only). `rev` is always a full 40-char commit SHA
 # (annotated tags are peeled to the commit). `subdir` limits scoring to library source.
 schema_version = 1

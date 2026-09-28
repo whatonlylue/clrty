@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch the Clarity evaluation corpus described by corpus/manifest.toml.
+"""Fetch the clrty evaluation corpus described by corpus/manifest.toml.
 
 Stdlib only, Python 3.12. Run: `uv run corpus/fetch.py` or `python3 corpus/fetch.py [name ...]`.
 Git entries: git init + `fetch --depth 1 origin <sha>` + checkout (works for any SHA).
@@ -17,7 +17,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 DEST = HERE / "repos"
-STAMP = ".clarity-rev"
+STAMP = ".clrty-rev"
 
 
 def git(cwd: Path, *args: str) -> str:

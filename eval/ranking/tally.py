@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tally blind-ranking results for Clarity experiments E1 and E5. Stdlib only.
+"""Tally blind-ranking results for clrty experiments E1 and E5. Stdlib only.
 
   tally.py pairs.json results-*.json            # E1: score vs. human majority
   tally.py --e5 pairs.json results-*.json       # E5: % better / % worse

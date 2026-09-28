@@ -5,7 +5,7 @@ Status: Accepted
 
 ## Context
 
-Clarity rescores code hundreds of times per session—once after every edit during refactoring. The scoring engine runs in tight loops on every saved file in agent mode, and performance directly affects turnaround time and cost. Additionally, Clarity must ship as a self-contained tool that users invoke locally, and native ecosystem integration matters.
+clrty rescores code hundreds of times per session—once after every edit during refactoring. The scoring engine runs in tight loops on every saved file in agent mode, and performance directly affects turnaround time and cost. Additionally, clrty must ship as a self-contained tool that users invoke locally, and native ecosystem integration matters.
 
 ## Options considered
 

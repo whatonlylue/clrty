@@ -5,7 +5,7 @@ Status: Accepted
 
 ## Context
 
-Clarity's rule packs and analyzers are language-specific. The SlopCodeBench rules for verbosity and erosion are already ported to Python and TypeScript, and tree-sitter grammars exist for many languages. The question is which languages to include in v1 versus deferring to later phases.
+clrty's rule packs and analyzers are language-specific. The SlopCodeBench rules for verbosity and erosion are already ported to Python and TypeScript, and tree-sitter grammars exist for many languages. The question is which languages to include in v1 versus deferring to later phases.
 
 ## Options considered
 

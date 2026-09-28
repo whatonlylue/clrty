@@ -5,7 +5,7 @@ Status: Accepted
 
 ## Context
 
-Clarity will vendor the SlopCodeBench ast-grep rules (Build plan › Repository layout), which are Apache-2.0 licensed. The original SlopCodeBench code is MIT (Project Plan › Research findings). Clarity's own code needs a license that is compatible with both upstream dependencies and the project's distribution goals.
+clrty will vendor the SlopCodeBench ast-grep rules (Build plan › Repository layout), which are Apache-2.0 licensed. The original SlopCodeBench code is MIT (Project Plan › Research findings). clrty's own code needs a license that is compatible with both upstream dependencies and the project's distribution goals.
 
 ## Options considered
 
@@ -19,4 +19,4 @@ Clarity will vendor the SlopCodeBench ast-grep rules (Build plan › Repository 
 
 ## Consequences
 
-Contributions are licensed under Apache-2.0 inbound and outbound (section 5). The NOTICE file credits the vendored SCB rules as Apache-2.0 (SCB's own code is MIT; only the rules Clarity vendors carry the Apache-2.0 license). Users get stronger patent protection. The only downside is slightly longer license text, but this is standard for serious open-source projects and fits the academic rigor of the SlopCodeBench foundation.
+Contributions are licensed under Apache-2.0 inbound and outbound (section 5). The NOTICE file credits the vendored SCB rules as Apache-2.0 (SCB's own code is MIT; only the rules clrty vendors carry the Apache-2.0 license). Users get stronger patent protection. The only downside is slightly longer license text, but this is standard for serious open-source projects and fits the academic rigor of the SlopCodeBench foundation.

@@ -1,6 +1,6 @@
-# Clarity evaluation corpus
+# clrty evaluation corpus
 
-Pinned code used to calibrate and evaluate Clarity's SCB-style metrics (erosion, verbosity).
+Pinned code used to calibrate and evaluate clrty's SCB-style metrics (erosion, verbosity).
 
 ## Contents
 

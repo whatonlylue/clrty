@@ -5,13 +5,13 @@ Status: Accepted
 
 ## Context
 
-Refactoring uncovered code is risky; behavior is harder to verify if tests don't exercise the changes. The planner ranks findings by coverage and skips uncovered code unless the characterization phase is on (Build plan › Agent loop internals › Preflight). The question is whether Clarity should author tests to enable refactoring sparse-coverage hotspots.
+Refactoring uncovered code is risky; behavior is harder to verify if tests don't exercise the changes. The planner ranks findings by coverage and skips uncovered code unless the characterization phase is on (Build plan › Agent loop internals › Preflight). The question is whether clrty should author tests to enable refactoring sparse-coverage hotspots.
 
 ## Options considered
 
 **Opt-in characterization phase, off by default:** When a hotspot has thin coverage, a separate agent writes tests into a dedicated directory. Tests must pass against the original code before they freeze. The refactoring agent never edits tests, maintaining separation of concerns (Project Plan › Agent mode › Characterization phase).
 
-**Never let Clarity author tests:** Pure refactoring only; skip all uncovered code. Simpler but leaves refactoring opportunities on the table if coverage gaps exist.
+**Never let clrty author tests:** Pure refactoring only; skip all uncovered code. Simpler but leaves refactoring opportunities on the table if coverage gaps exist.
 
 ## Decision
 

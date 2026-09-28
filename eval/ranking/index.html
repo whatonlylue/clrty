@@ -114,7 +114,7 @@
     return (h >>> 0).toString(16);
   }
   function safe(fn) { try { return fn(); } catch (e) { return null; } }
-  function storeKey(name) { return 'clarity-rank:' + fp + ':' + name.trim().toLowerCase(); }
+  function storeKey(name) { return 'clrty-rank:' + fp + ':' + name.trim().toLowerCase(); }
   function save() { safe(function () { localStorage.setItem(storeKey(state.rater), JSON.stringify(state)); }); }
 
   // ---- loading ----
@@ -138,7 +138,7 @@
     if (d.title) { $('title').textContent = d.title; document.title = d.title; }
     $('load').classList.add('hidden');
     $('name').classList.remove('hidden');
-    var last = safe(function () { return localStorage.getItem('clarity-rank:lastname'); });
+    var last = safe(function () { return localStorage.getItem('clrty-rank:lastname'); });
     if (last) $('rater').value = last;
     $('namemsg').textContent = d.pairs.length + ' pairs loaded.';
     $('rater').focus();
@@ -163,7 +163,7 @@
   function begin() {
     var name = $('rater').value.trim();
     if (!name) { $('namemsg').textContent = 'Please enter your name.'; return; }
-    safe(function () { localStorage.setItem('clarity-rank:lastname', name); });
+    safe(function () { localStorage.setItem('clrty-rank:lastname', name); });
     var saved = safe(function () { return JSON.parse(localStorage.getItem(storeKey(name))); });
     if (saved && saved.order && saved.order.length === data.pairs.length) {
       state = saved;
@@ -265,7 +265,7 @@
       rows.push(row);
     });
     return {
-      format: 'clarity-blind-rank/1',
+      format: 'clrty-blind-rank/1',
       rater: state.rater,
       seed: state.seed,
       pairs_fingerprint: fp,

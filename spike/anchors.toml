@@ -1,0 +1,67 @@
+# Anchors for n = clamp((b - m) / (b - g), 0, 1)   (g = good, b = bad; lower raw is better)
+# n = 1 means at-or-better-than the good anchor (clean); n = 0 means at-or-worse-than the bad anchor.
+# Higher n is better; the composite is 100 when every n is 1.
+#
+# CALIBRATED  = taken from the plan / SlopCodeBench paper numbers.
+# UNCALIBRATED = made-up placeholder; replace with corpus-derived values (human median / agent p90).
+
+[weights]
+# Explicit weights. Every other present family shares the remainder evenly.
+# All weights are renormalised to sum to 1 over the families that are actually present.
+erosion = 0.20
+verbosity = 0.20
+duplication = 0.15
+
+[erosion]
+status = "calibrated (with a caveat, see note)"
+good = 0.31            # human mean (SCB paper, 48 repos)
+bad = 0.936            # agent p90 ~= 0.68 + 1.28 * 0.20 = 0.936
+note = "The task brief said b=0.88 but also said to use 0.68+1.28*0.20, which is 0.936. The formula was followed; set bad = 0.88 to use the literal number."
+
+[verbosity]
+status = "calibrated"
+good = 0.15            # human mean
+bad = 0.458            # agent p90 ~= 0.33 + 1.28 * 0.10 (~0.46)
+
+[cognitive_erosion]
+status = "UNCALIBRATED placeholder"
+note = "Known deviation: the plan uses cognitive complexity > 15 as the threshold; scb-check hard-codes > 10, so raw values here are not the plan's metric."
+good = 0.45
+bad = 0.95
+
+[duplication]
+status = "UNCALIBRATED placeholder"
+good = 0.03
+bad = 0.25
+
+# Granularity: mean of the two sub-metrics' normalised values.
+[granularity.single_use_share]
+status = "UNCALIBRATED placeholder (sloptrack human mean is 0.27 +/- 0.13; no agent band published)"
+good = 0.27
+bad = 0.60
+
+[granularity.trivial_wrapper_share]
+status = "UNCALIBRATED placeholder"
+good = 0.0
+bad = 0.10
+
+# Structure: mean of the four sub-metrics' normalised values.
+[structure.nesting_p95]
+status = "UNCALIBRATED placeholder"
+good = 3
+bad = 8
+
+[structure.function_sloc_p95]
+status = "UNCALIBRATED placeholder"
+good = 30
+bad = 120
+
+[structure.many_params_share]      # share of functions with > 5 params
+status = "UNCALIBRATED placeholder"
+good = 0.005
+bad = 0.05
+
+[structure.big_file_share]         # share of files with > 500 SLOC
+status = "UNCALIBRATED placeholder"
+good = 0.0
+bad = 0.10

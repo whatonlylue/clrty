@@ -1,0 +1,29 @@
+[project]
+name = "clrty-spike"
+version = "0.0.1"
+description = "THROWAWAY P0 spike: wraps scb-check + radon + sloptrack into one score vector"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "radon==6.0.1",
+    "scb-check @ git+https://github.com/gabeorlanski/scb-check@a8618228939def726c2ec48b354693e5aa1999d5",
+    "sloptrack @ git+https://github.com/kennyfrc/sloptrack@4ddd8693f66912fba85e74acd5467f564896043a",
+]
+
+[project.scripts]
+clrty-spike = "clrty_spike.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/clrty_spike"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

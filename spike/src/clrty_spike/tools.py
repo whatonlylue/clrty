@@ -1,6 +1,8 @@
 """Thin wrappers around the three external tools. Each returns plain data; failures raise ToolError."""
+
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
@@ -38,13 +40,10 @@ def dist_version(name: str) -> str:
     except metadata.PackageNotFoundError:
         return "not installed"
     v = d.version
-    try:
-        du = json.loads(d.read_text("direct_url.json") or "{}")
-        sha = du.get("vcs_info", {}).get("commit_id")
+    with contextlib.suppress(ValueError, TypeError):
+        sha = json.loads(d.read_text("direct_url.json") or "{}").get("vcs_info", {}).get("commit_id")
         if sha:
             v += f"@{sha}"
-    except (ValueError, TypeError):
-        pass
     return v
 
 
@@ -92,17 +91,16 @@ def scb_findings(path: Path, root: Path) -> dict:
             if m:
                 f = Path(m["file"])
                 f = f if f.is_absolute() else (cwd / f)
-                try:
+                with contextlib.suppress(ValueError):  # outside the root: keep the absolute path
                     f = f.resolve().relative_to(base.resolve())
-                except ValueError:
-                    pass
                 locs.append((str(f), int(m["line"])))
         m = re.match(r"(erosion|cog_erosion): function `(.+?)` exceeds", head)
         if m and locs:
             c = re.search(r"complexity: (\d+), sloc: (\d+)", blk)
             if c:
-                res[m[1]].append({"file": locs[0][0], "line": locs[0][1], "symbol": m[2],
-                                  "complexity": int(c[1]), "sloc": int(c[2])})
+                res[m[1]].append(
+                    {"file": locs[0][0], "line": locs[0][1], "symbol": m[2], "complexity": int(c[1]), "sloc": int(c[2])}
+                )
             continue
         m = re.match(r"duplicate-structure: duplicated block \((\d+) lines, (\d+) instances\)", head)
         if m and locs:
@@ -115,8 +113,23 @@ def sloptrack_json(path: Path) -> dict:
     # -P: we run from inside the target, and `python -m` would put it first on sys.path, so a
     # target module named like a stdlib one (click's types.py) shadows it and sloptrack dies on import.
     cwd = path if path.is_dir() else path.parent
-    out = _run([sys.executable, "-P", "-m", "sloptrack", "measure", str(path), "--json", "--no-uvx",
-                "--no-git", "--top", "1000"], cwd, ok=(0, 1))
+    out = _run(
+        [
+            sys.executable,
+            "-P",
+            "-m",
+            "sloptrack",
+            "measure",
+            str(path),
+            "--json",
+            "--no-uvx",
+            "--no-git",
+            "--top",
+            "1000",
+        ],
+        cwd,
+        ok=(0, 1),
+    )
     try:
         return json.loads(out)
     except ValueError as e:
@@ -139,8 +152,8 @@ def radon_summary(root: Path) -> dict:
         try:
             src = p.read_text(encoding="utf-8", errors="replace")
             blocks += [(str(p.relative_to(base)), b) for b in cc_visit(src)]
-            mis.append((mi_visit(src, multi=True), analyze(src).sloc))
             r = analyze(src)
+            mis.append((mi_visit(src, multi=True), r.sloc))
             for k in raw:
                 raw[k] += getattr(r, k)
             n_files += 1

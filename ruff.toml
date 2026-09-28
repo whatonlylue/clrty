@@ -1,0 +1,11 @@
+# Shared by spike/, eval/ and corpus/. Run from spike/: `uv run ruff check .. && uv run ruff format ..`
+line-length = 120
+target-version = "py312"
+extend-exclude = ["corpus/repos", "spike/tests/fixtures"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["RUF005"]  # `a + [b]` reads fine for argv lists
+
+[lint.isort]
+known-first-party = ["clrty_spike"]

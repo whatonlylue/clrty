@@ -1,4 +1,5 @@
 """Anchors, normalisation, composite."""
+
 from __future__ import annotations
 
 import math
@@ -6,8 +7,6 @@ import tomllib
 from pathlib import Path
 
 ANCHORS_PATH = Path(__file__).resolve().parents[2] / "anchors.toml"
-FAMILIES = ["erosion", "cognitive_erosion", "verbosity", "duplication", "granularity", "structure",
-            "coupling", "hygiene"]
 
 
 def load_anchors(path: Path | None = None) -> dict:

@@ -74,7 +74,7 @@ def test_normalize_and_weights():
 def test_trivial_wrapper_detection(tmp_path):
     (tmp_path / "m.py").write_text(
         "def a(x, y):\n    return b(y, x)\n"
-        "def c(x):\n    return c2(x + 1)\n"        # not a pure forward
+        "def c(x):\n    return c2(x + 1)\n"  # not a pure forward
         "def d(x):\n    '''doc'''\n    return e.f(x)\n"
         "def g(x):\n    y = x\n    return h(y)\n"  # two statements
     )

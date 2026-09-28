@@ -1,25 +1,38 @@
 """Stand-in metrics implemented with Python's `ast`: structure family, trivial wrappers, function spans."""
+
 from __future__ import annotations
 
 import ast
 import math
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
-SKIP_DIRS = {".git", ".hg", ".venv", "venv", "env", "node_modules", "__pycache__", "build", "dist",
-             ".tox", ".mypy_cache", ".pytest_cache", ".ruff_cache", "site-packages", ".eggs"}
-NEST_NODES = (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith, ast.Match)
-try:  # py3.11+
-    NEST_NODES += (ast.TryStar,)
-except AttributeError:  # pragma: no cover
-    pass
+SKIP_DIRS = {
+    ".git",
+    ".hg",
+    ".venv",
+    "venv",
+    "env",
+    "node_modules",
+    "__pycache__",
+    "build",
+    "dist",
+    ".tox",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "site-packages",
+    ".eggs",
+}
+NEST_NODES = (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.TryStar, ast.With, ast.AsyncWith, ast.Match)
 FUNC_NODES = (ast.FunctionDef, ast.AsyncFunctionDef)
 
 
 @dataclass
 class Func:
-    file: str          # path relative to repo root
-    name: str          # qualified-ish name (Class.method)
+    file: str  # path relative to repo root
+    name: str  # qualified-ish name (Class.method)
     start: int
     end: int
     sloc: int
@@ -28,7 +41,7 @@ class Func:
     trivial_wrapper: bool
 
 
-def iter_py_files(root: Path):
+def iter_py_files(root: Path) -> Iterator[Path]:
     if root.is_file():
         yield root
         return
@@ -41,7 +54,7 @@ def iter_py_files(root: Path):
 
 def _sloc(lines: list[str], start: int, end: int) -> int:
     n = 0
-    for ln in lines[start - 1:end]:
+    for ln in lines[start - 1 : end]:
         s = ln.strip()
         if s and not s.startswith("#"):
             n += 1
@@ -72,8 +85,12 @@ def _param_names(fn) -> list[str]:
 def _is_trivial_wrapper(fn) -> bool:
     """Body (minus docstring) is a single `return f(...)` / `f(...)` that only forwards the function's own params."""
     body = list(fn.body)
-    if body and isinstance(body[0], ast.Expr) and isinstance(getattr(body[0], "value", None), ast.Constant) \
-            and isinstance(body[0].value.value, str):
+    if (
+        body
+        and isinstance(body[0], ast.Expr)
+        and isinstance(getattr(body[0], "value", None), ast.Constant)
+        and isinstance(body[0].value.value, str)
+    ):
         body = body[1:]
     if len(body) != 1:
         return False
@@ -108,8 +125,8 @@ def _walk_funcs(tree: ast.AST, prefix: str = ""):
             yield from _walk_funcs(node, prefix)
 
 
-def collect(root: Path):
-    """Return (funcs, file_sloc) where file_sloc maps relative file -> SLOC. Unparseable files are listed."""
+def collect(root: Path) -> tuple[list[Func], dict[str, int], list[str]]:
+    """Return (funcs, file_sloc, parse_failures); file_sloc maps each parsed file's relative path to its SLOC."""
     base = root if root.is_dir() else root.parent
     funcs: list[Func] = []
     file_sloc: dict[str, int] = {}
@@ -127,8 +144,18 @@ def collect(root: Path):
         for fn, qname in _walk_funcs(tree):
             end = fn.end_lineno or fn.lineno
             params = [x for x in _param_names(fn) if x not in ("self", "cls")]
-            funcs.append(Func(rel, qname, fn.lineno, end, _sloc(lines, fn.lineno, end), len(params),
-                              _max_nesting(fn), _is_trivial_wrapper(fn)))
+            funcs.append(
+                Func(
+                    rel,
+                    qname,
+                    fn.lineno,
+                    end,
+                    _sloc(lines, fn.lineno, end),
+                    len(params),
+                    _max_nesting(fn),
+                    _is_trivial_wrapper(fn),
+                )
+            )
     return funcs, file_sloc, failed
 
 

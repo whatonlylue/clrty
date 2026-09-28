@@ -11,6 +11,7 @@ uv sync                                   # installs pinned deps (Python 3.12/3.
 uv run clrty-spike score <path> [--json out.json]
 uv run clrty-spike diff <before_path> <after_path> [--json out.json]
 uv run pytest -q
+uv run ruff check .. && uv run ruff format --check ..   # config in ../ruff.toml
 ```
 
 `score` prints the JSON (and also writes it to `--json`). `diff` prints per-family raw and normalized deltas plus
@@ -25,6 +26,16 @@ the composite delta, and warns if tool versions differ between the two runs.
 | radon | 6.0.1 | PyPI |
 
 Bumping any pin, `anchors.toml`, or the stand-in code changes scores: do not compare across versions.
+
+## Code map
+
+| Module | Role |
+|---|---|
+| `cli.py` | `score` / `diff` commands |
+| `score.py` | `score_path`: one `_family_*` builder per family, hotspot ranking, output assembly |
+| `scoring.py` | anchors, normalisation, weights, composite |
+| `tools.py` | subprocess wrappers for scb-check and sloptrack, radon summary |
+| `astmetrics.py` | `ast` stand-ins: function spans, nesting, params, trivial wrappers |
 
 ## Score conventions
 

@@ -1,0 +1,49 @@
+clrty status, 2026-09-28
+
+WHERE IT STANDS
+M0, spike phase. The scorer works end to end on real code. It was sanity-checked on click, aiohttp and rich,
+and it now reads clean. Nothing has been validated against actual humans yet, so the score is still an
+educated guess.
+
+Done:
+- ADRs 0001-0008, corpus manifest + fetcher, blind-ranking page + tally, the spike scorer
+- stdlib-shadowing bug fixed (click and rich were quietly losing half their granularity input)
+- baseline scores for all three repos, whole and library-only, in corpus/README.md
+- cleanup pass: score_path went from one 190-line function to one builder per family, dead code gone,
+  tally.py stopped mutating a global, ruff lint + format across all the Python, root README, fuller .gitignore
+- refactor is behavior-preserving: every score, diff and tally output is byte-identical to before
+
+Not done:
+- E1 (does the score agree with people?). This is the M0 gate. The Rust build waits on it.
+- agent-written code in the corpus. SlopCodeBench doesn't publish any, so it has to be generated.
+- coupling and hygiene families are still null. Structure and trivial-wrapper metrics are stand-ins
+  with uncalibrated anchors.
+
+COMMANDS
+setup
+  (cd spike && uv sync)
+  python3 corpus/fetch.py                        clone click, aiohttp, rich into corpus/repos/
+
+score
+  cd spike
+  uv run clrty-spike score <path> [--json out.json]
+  uv run clrty-spike diff <before> <after> [--json out.json]
+
+verify
+  (cd spike && uv run pytest -q)                 13 tests
+  (cd spike && uv run ruff check .. && uv run ruff format --check ..)
+  python3 eval/ranking/tally.py --selftest
+  (cd clrty && cargo build)                      still a hello-world stub
+
+E1 / E5
+  python3 eval/ranking/tally.py --strip pairs.json > pairs.public.json
+  python3 eval/ranking/tally.py pairs.json results-*.json          E1
+  python3 eval/ranking/tally.py --e5 pairs.json results-*.json     E5
+  open eval/ranking/index.html, the rating page
+
+WHAT I NEED FROM YOU
+1. Pick a scoring scope for E1. Library-only, whole repo, or just the snippet raters see. I'd go with the snippet.
+2. Say go on E1 prep. I build the 40 pairs, host the rating page, and optionally run a model pilot first.
+3. Round up 3 or 4 raters for about 20 minutes each. That's the one step I can't do for you.
+4. Decide on agent code for the corpus: run slop-code yourself, or have me generate a few checkpoints.
+5. Merge claude/remote-session-continuation-spb61b when you're happy with it. Nothing's in main yet.

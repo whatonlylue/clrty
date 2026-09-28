@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """Tally blind-ranking results for clrty experiments E1 and E5. Stdlib only.
 
-  tally.py pairs.json results-*.json            # E1: score vs. human majority
-  tally.py --e5 pairs.json results-*.json       # E5: % better / % worse
-  tally.py --strip pairs.json > public.json     # remove hidden meta before sending
+tally.py pairs.json results-*.json            # E1: score vs. human majority
+tally.py --e5 pairs.json results-*.json       # E5: % better / % worse
+tally.py --strip pairs.json > public.json     # remove hidden meta before sending
 """
+
 import argparse
+import io
 import json
 import sys
+import unittest
+from contextlib import redirect_stdout
 
 CATS = ("before", "after", "tie")
 
@@ -58,13 +62,12 @@ def fleiss_kappa(rows):
     return (P_bar - P_e) / (1 - P_e)
 
 
-TIE_THRESHOLD = 0.25
+TIE_THRESHOLD = 0.25  # the gate's epsilon
 
 
-def score_dir(delta, tie=None):
+def score_dir(delta, tie=TIE_THRESHOLD):
     """Score direction; |delta| < tie threshold counts as a tie."""
-    t = TIE_THRESHOLD if tie is None else tie
-    if abs(delta) < t:
+    if abs(delta) < tie:
         return "tie"
     return "after" if delta > 0 else "before"
 
@@ -83,25 +86,27 @@ def cmd_strip(args):
 
 
 def main():
-    global TIE_THRESHOLD
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("pairs", nargs="?", help="pairs file (with meta)")
     ap.add_argument("results", nargs="*", help="results files, one per rater")
     ap.add_argument("--e5", action="store_true", help="E5 mode: report %% better / %% worse")
     ap.add_argument("--strip", action="store_true", help="print the pairs file without meta and exit")
-    ap.add_argument("--tie-threshold", type=float, default=TIE_THRESHOLD, metavar="T",
-                    help="score counts as a tie when |score_delta| < T (default 0.25, the gate's epsilon)")
+    ap.add_argument(
+        "--tie-threshold",
+        type=float,
+        default=TIE_THRESHOLD,
+        metavar="T",
+        help="score counts as a tie when |score_delta| < T (default 0.25, the gate's epsilon)",
+    )
     ap.add_argument("--selftest", action="store_true", help="run the built-in unit tests and exit")
     ap.add_argument("--bar", type=float, default=0.75, help="E1 agreement pass bar (default 0.75)")
     args = ap.parse_args()
 
     if args.selftest:
-        import unittest
         suite = unittest.defaultTestLoader.loadTestsFromTestCase(SelfTest)
         sys.exit(not unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful())
     if not args.pairs:
         ap.error("pairs file required")
-    TIE_THRESHOLD = args.tie_threshold
     if args.strip:
         return cmd_strip(args)
     if not args.results:
@@ -115,7 +120,7 @@ def main():
             name = f"{name} ({path})"
         raters[name] = v
 
-    print(f"Score tie threshold: |score_delta| < {TIE_THRESHOLD} counts as tie")
+    print(f"Score tie threshold: |score_delta| < {args.tie_threshold} counts as tie")
     print(f"Raters ({len(raters)}): " + ", ".join(f"{n} [{len(v)}/{len(pairs)} pairs]" for n, v in raters.items()))
 
     # per-pair vote counts over the raters who answered it
@@ -134,29 +139,34 @@ def main():
 
     if args.e5:
         return report_e5(counts, maj)
-    return report_e1(pairs, raters, counts, maj, args.bar)
+    return report_e1(pairs, raters, counts, maj, args.bar, args.tie_threshold)
 
 
-def report_e1(pairs, raters, counts, maj, bar):
+def report_e1(pairs, raters, counts, maj, bar, tie=TIE_THRESHOLD):
     print(f"Pairs judged: {len(counts)}\n")
     print("Per-pair majority (before / after / tie votes):")
     for pid, c in counts.items():
         delta = pairs[pid]["meta"].get("score_delta")
-        s = score_dir(delta) if delta is not None else "n/a"
+        s = score_dir(delta, tie) if delta is not None else "n/a"
         print(f"  {pid:<12} {c['before']}/{c['after']}/{c['tie']}  majority={maj[pid]:<6} score={s:<6} (delta={delta})")
 
     scored = [pid for pid in counts if pairs[pid]["meta"].get("score_delta") is not None]
-    agree = [pid for pid in scored if score_dir(pairs[pid]["meta"]["score_delta"]) == maj[pid]]
+    agree = [pid for pid in scored if score_dir(pairs[pid]["meta"]["score_delta"], tie) == maj[pid]]
     dis = [pid for pid in scored if pid not in agree]
     decisive = [pid for pid in scored if maj[pid] != "tie"]
-    agree_dec = [pid for pid in decisive if score_dir(pairs[pid]["meta"]["score_delta"]) == maj[pid]]
+    agree_dec = [pid for pid in decisive if score_dir(pairs[pid]["meta"]["score_delta"], tie) == maj[pid]]
 
-    print(f"\nMajority: before better {sum(m == 'before' for m in maj.values())}, "
-          f"after better {sum(m == 'after' for m in maj.values())}, tie {sum(m == 'tie' for m in maj.values())}")
+    print(
+        f"\nMajority: before better {sum(m == 'before' for m in maj.values())}, "
+        f"after better {sum(m == 'after' for m in maj.values())}, tie {sum(m == 'tie' for m in maj.values())}"
+    )
     n = len(scored)
     rate = len(agree) / n if n else 0.0
     print(f"\nScore vs. majority agreement (all pairs, tie matches tie): {len(agree)}/{n} = {pct(len(agree), n)}")
-    print(f"Score vs. majority agreement (excluding majority ties):    {len(agree_dec)}/{len(decisive)} = {pct(len(agree_dec), len(decisive))}")
+    print(
+        f"Score vs. majority agreement (excluding majority ties):    "
+        f"{len(agree_dec)}/{len(decisive)} = {pct(len(agree_dec), len(decisive))}"
+    )
     print(f"Pass bar {bar:.0%} on all-pairs agreement: {'PASS' if n and rate >= bar else 'FAIL'}")
 
     # Fleiss' kappa over pairs rated by every rater
@@ -170,8 +180,10 @@ def report_e1(pairs, raters, counts, maj, bar):
     print(f"\nDisagreeing pairs ({len(dis)}):")
     for pid in dis:
         c = counts[pid]
-        print(f"  {pid}: score says {score_dir(pairs[pid]['meta']['score_delta'])}, humans say {maj[pid]} "
-              f"(before {c['before']}, after {c['after']}, tie {c['tie']})")
+        print(
+            f"  {pid}: score says {score_dir(pairs[pid]['meta']['score_delta'], tie)}, humans say {maj[pid]} "
+            f"(before {c['before']}, after {c['after']}, tie {c['tie']})"
+        )
     if not dis:
         print("  none")
 
@@ -192,7 +204,10 @@ def report_e5(counts, maj):
     print(f"  better: {better} ({pct(better, n)})   same: {same} ({pct(same, n)})   worse: {worse} ({pct(worse, n)})")
     tot = {k: sum(c[k] for c in counts.values()) for k in CATS}
     t = sum(tot.values())
-    print(f"Pooled individual votes ({t}): better {pct(tot['after'], t)}, same {pct(tot['tie'], t)}, worse {pct(tot['before'], t)}")
+    print(
+        f"Pooled individual votes ({t}): "
+        f"better {pct(tot['after'], t)}, same {pct(tot['tie'], t)}, worse {pct(tot['before'], t)}"
+    )
     ok_b = n and better / n >= 0.80
     ok_w = n and worse / n < 0.05
     print(f"Bar >=80% better: {'PASS' if ok_b else 'FAIL'}")
@@ -202,14 +217,9 @@ def report_e5(counts, maj):
     print("(E5 note: side 'before' = parent commit, 'after' = accepted commit.)")
 
 
-import unittest
-
-
 class SelfTest(unittest.TestCase):
     def _e1(self, delta, votes):
-        """Run report_e1 on one pair; return (agree_count, printed text)."""
-        import io
-        from contextlib import redirect_stdout
+        """Run report_e1 on one pair; return the printed report."""
         pairs = {"p": {"meta": {"before": "a", "score_delta": delta}}}
         c = {k: votes.count(k) for k in CATS}
         buf = io.StringIO()

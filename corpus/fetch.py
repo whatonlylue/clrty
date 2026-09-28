@@ -5,6 +5,7 @@ Stdlib only, Python 3.12. Run: `uv run corpus/fetch.py` or `python3 corpus/fetch
 Git entries: git init + `fetch --depth 1 origin <sha>` + checkout (works for any SHA).
 Archive entries (`archive` + `sha256` keys): download, verify, extract. Idempotent.
 """
+
 import hashlib
 import io
 import subprocess

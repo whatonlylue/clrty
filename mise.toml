@@ -1,0 +1,6 @@
+[tools]
+"cargo:eza" = "latest"
+rust = "latest"
+
+[env]
+EDITOR = "nvim"

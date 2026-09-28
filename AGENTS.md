@@ -26,6 +26,7 @@ export PATH="$HOME/.local/bin:$PATH"
 ```sh
 (cd clrty && cargo build)                      # Rust crate (a stub until M1a)
 (cd spike && uv run pytest -q)                 # spike tests
+(cd spike && uv run ruff check .. && uv run ruff format --check ..)  # lint + format, config in ruff.toml
 python3 eval/ranking/tally.py --selftest       # ranking tally, stdlib only
 ```
 
@@ -37,14 +38,16 @@ Optional: `python3 corpus/fetch.py` clones the pinned evaluation repos (click, a
 |---|---|
 | `clrty/` | Rust crate; becomes the `clrty-*` workspace in M1a |
 | `spike/` | P0 Python scorer wrapping scb-check, radon, sloptrack |
-| `corpus/` | Pinned repo manifest and fetch script |
+| `corpus/` | Pinned repo manifest, fetch script and baseline scores |
 | `eval/ranking/` | Blind-ranking page and tally for experiments E1/E5 |
 | `docs/adr/` | Architecture decisions. Read these before changing a decision they record |
+| `ruff.toml` | Python lint and format config shared by `spike/`, `eval/` and `corpus/` |
 
 ## Rules
 
 - The project name is `clrty` in code, commands, paths and prose. "Clarity" means only the unrelated Stacks language.
 - Don't commit `corpus/repos/`, `target/`, `.venv/` or caches.
+- Refactors of the spike must not change scores. Save `clrty-spike score` output for the fixtures and corpus before, rerun after, and diff.
 - Don't tune anchors or weights in `spike/anchors.toml` to make a result look better. Changes need evidence from the corpus.
 - The maintainer uses jj (colocated with git) locally. Plain git commits work fine from a cloud container.
 - License: Apache-2.0.

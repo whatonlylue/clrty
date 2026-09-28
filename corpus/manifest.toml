@@ -1,0 +1,41 @@
+# Clarity evaluation corpus manifest.
+# Consumed by corpus/fetch.py (stdlib only). `rev` is always a full 40-char commit SHA
+# (annotated tags are peeled to the commit). `subdir` limits scoring to library source.
+schema_version = 1
+
+# Human-maintained calibration set (target: erosion ~0.31, verbosity ~0.15).
+
+# click 8.5.0: canonical idiomatic CLI library (Pallets), very actively released (2026-08-27); ~12.7k LOC in src/click.
+[[repo]]
+name = "click"
+kind = "human-oss"
+url = "https://github.com/pallets/click"
+rev = "8b19813f2bfca99f1018a587a8cf54fc959f2e5d"   # tag 8.5.0 (peeled)
+subdir = "src/click"
+language = "python"
+
+# aiohttp v3.14.3: async HTTP client/server, web domain, released 2026-07-22; ~27.6k LOC (some Cython .pyx excluded, not Python).
+[[repo]]
+name = "aiohttp"
+kind = "human-oss"
+url = "https://github.com/aio-libs/aiohttp"
+rev = "5e392ce0456f5235a4ee6ad46f0e806df2f15873"   # tag v3.14.3 (peeled)
+subdir = "aiohttp"
+language = "python"
+
+# rich v15.0.0: terminal rendering / tables / markup, data-display domain, released 2026-04-12; ~38.5k LOC in rich/.
+[[repo]]
+name = "rich"
+kind = "human-oss"
+url = "https://github.com/Textualize/rich"
+rev = "6ac483cbea39cab124dfd3483bba70ffafb71050"   # tag v15.0.0
+subdir = "rich"
+language = "python"
+
+# SCB agent checkpoints: NONE pinned. As of 2026-09-28 the SlopCodeBench authors publish no
+# agent outputs/trajectories (see README.md). Entries would look like:
+#   [[repo]]
+#   name = "scb-<model>-<problem>-cp<N>"; kind = "scb-checkpoint"
+#   url = "<git url>"  (or archive = "<https/file url>", sha256 = "<hex>")
+#   rev = "<40-hex sha>"; subdir = "snapshot"; language = "python"
+#   model = "..."; problem = "..."; checkpoint = "checkpoint_N"
